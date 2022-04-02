@@ -69,7 +69,6 @@ button:hover {
 input {
     display: flex;
     justify-content: center;
-    margin-bottom: 1rem;
     border-radius: 25px;
     box-shadow: inset 8px 8px 8px var(--inside-box-shadow-one),
         inset -8px -8px 8px var(--inside-box-shadow-two);
@@ -81,6 +80,7 @@ input {
     color: var(--txt-color);
     padding-left: 1rem;
     padding-right: 1rem;
+    width: 100%;
 
 }
 
