@@ -1,13 +1,91 @@
 <script lang="ts">
     import { SHA512 } from "jscrypto/es6/SHA512";
+    import Message from "../components/Message.svelte";
 
     import FaArrowAltCircleUp from "svelte-icons/fa/FaArrowAltCircleUp.svelte";
+
+    import { deriveKeypair, encrypt } from "../utils/aes";
+
+    import { onMount } from "svelte";
+
     // get username and roomKey from localStorage
     const username: string = window.localStorage.getItem("username");
     const roomKey: string = window.localStorage.getItem("roomKey");
 
+    let message: string = "";
+
+    interface baseMessageData {
+        username: string;
+        content: string;
+        isSystem?: boolean;
+        requiresDecryption?: boolean;
+    }
+
+    let messages: baseMessageData[] = [];
+
     // hash the roomKey with SHA-512
     const hashedRoomKey: string = SHA512.hash(roomKey).toString();
+
+    const enc = new TextEncoder();
+
+    const doSend = async () => {
+        if (!username || !roomKey) {
+            return;
+        }
+
+        // process commands
+        switch (message) {
+            case "/debug":
+                console.log("username:", username);
+                console.log("roomKey:", roomKey);
+                console.log("hashedRoomKey:", hashedRoomKey);
+                messages = [
+                    ...messages,
+                    {
+                        isSystem: true,
+                        username: "System",
+                        content: `Username: ${username}\n\nRoom Key: ${roomKey}\n\nHashed Room Key: ${hashedRoomKey}`,
+                    },
+                ];
+                return;
+        }
+
+        // encrypt message
+        const encryptedData: { iv: string; data: string } = await encrypt(
+            enc.encode(message),
+            keys
+        );
+
+        // add it to local stack decrypted
+        messages = [
+            ...messages,
+            {
+                username,
+                content: message,
+                requiresDecryption: false,
+            },
+        ];
+
+        message = "";
+
+    };
+
+    const handleKeyDown = async (e: KeyboardEvent) => {
+        if (e.key == "Enter") {
+            await doSend();
+        }
+    };
+
+    let keys: CryptoKey;
+
+    onMount(async () => {
+        if (!username || !roomKey) {
+            return;
+        }
+
+        // derive keypair
+        keys = await deriveKeypair(roomKey, hashedRoomKey);
+    });
 </script>
 
 <div class="container">
@@ -21,10 +99,19 @@
         <h1 style="margin: 0; font-size: 3rem;">CryptoChat</h1>
         <h2 style="margin: 0;">A stunning encrypted webapp.</h2>
     </div>
-    <div class="chatBox" />
+    <div class="chatBox">
+        {#each messages as message}
+            <Message {...message} />
+        {/each}
+    </div>
     <div class="messageBox">
-        <input class="messageInput override" placeholder="What's up?" />
-        <div class="inputIcon icon">
+        <input
+            on:keydown={handleKeyDown}
+            bind:value={message}
+            class="messageInput override"
+            placeholder="What's up?"
+        />
+        <div class="inputIcon icon" on:click={doSend}>
             <FaArrowAltCircleUp />
         </div>
     </div>
@@ -35,13 +122,12 @@
 </div>
 
 <style lang="scss">
-
     .buttons {
         display: flex;
         justify-content: space-between;
         margin-top: 1rem;
     }
-    
+
     .inputIcon {
         color: white;
         padding: 0.5rem;
