@@ -25,6 +25,7 @@
     "typescript": "^4.0.0"
   },
   "dependencies": {
+    "jscrypto": "^1.0.3",
     "sass": "^1.49.11",
     "sirv-cli": "^2.0.0",
     "svelte-icons": "^2.1.0",
