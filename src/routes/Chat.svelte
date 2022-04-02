@@ -31,7 +31,7 @@
     const enc = new TextEncoder();
 
     const doSend = async () => {
-        if (!username || !roomKey) {
+        if (!username || !roomKey || !message) {
             return;
         }
 
@@ -122,6 +122,8 @@
         message: { iv: string; data: string };
     }
 
+    let messageRef: HTMLDivElement;
+
     const messageHandler = async (msg: messageFromServer) => {
         const parsedData: encryptedMessageData = {
             username: msg.username,
@@ -131,6 +133,9 @@
         };
 
         messages = [...messages, parsedData];
+        // wait 5 ms because the DOM is not ready yet
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        messageRef.scrollTop = (messageRef.scrollHeight+messageRef.clientHeight);
     };
 </script>
 
@@ -145,8 +150,9 @@
         <h1 style="margin: 0; font-size: 3rem;">CryptoChat</h1>
         <h2 style="margin: 0;">A stunning encrypted webapp.</h2>
     </div>
-    <div class="chatBox">
-        {#each messages as message}
+    <div class="chatBox" bind:this={messageRef}>
+        {#each messages as message (message.content.iv)}
+            <!-- group messages depending on author -->
             <Message {keys} {...message} />
         {/each}
     </div>
