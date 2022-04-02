@@ -85,6 +85,10 @@
 
         // derive keypair
         keys = await deriveKeypair(roomKey, hashedRoomKey);
+
+        const apiUrl = API_URL;
+
+        console.log(apiUrl)
     });
 </script>
 
