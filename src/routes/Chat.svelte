@@ -6,7 +6,9 @@
 
     import { deriveKeypair, encrypt } from "../utils/aes";
 
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
+
+    import { socket } from "../utils/socket";
 
     // get username and roomKey from localStorage
     const username: string = window.localStorage.getItem("username");
@@ -14,14 +16,14 @@
 
     let message: string = "";
 
-    interface baseMessageData {
-        username: string;
-        content: string;
+    interface encryptedMessageData {
+        username: { iv: string; data: string };
+        content: { iv: string; data: string };
         isSystem?: boolean;
         requiresDecryption?: boolean;
     }
 
-    let messages: baseMessageData[] = [];
+    let messages: encryptedMessageData[] = [];
 
     // hash the roomKey with SHA-512
     const hashedRoomKey: string = SHA512.hash(roomKey).toString();
@@ -39,35 +41,36 @@
                 console.log("username:", username);
                 console.log("roomKey:", roomKey);
                 console.log("hashedRoomKey:", hashedRoomKey);
-                messages = [
-                    ...messages,
-                    {
-                        isSystem: true,
-                        username: "System",
-                        content: `Username: ${username}\n\nRoom Key: ${roomKey}\n\nHashed Room Key: ${hashedRoomKey}`,
-                    },
-                ];
+                // messages = [
+                //     ...messages,
+                //     {
+                //         isSystem: true,
+                //         username: "System",
+                //         content: `Username: ${username}\n\nRoom Key: ${roomKey}\n\nHashed Room Key: ${hashedRoomKey}`,
+                //     },
+                // ];
                 return;
         }
 
+        // encrypt username
+        const encryptedUsername: { iv: string; data: string } = await encrypt(
+            enc.encode(username),
+            keys
+        );
+
         // encrypt message
-        const encryptedData: { iv: string; data: string } = await encrypt(
+        const encryptedMessage: { iv: string; data: string } = await encrypt(
             enc.encode(message),
             keys
         );
 
-        // add it to local stack decrypted
-        messages = [
-            ...messages,
-            {
-                username,
-                content: message,
-                requiresDecryption: false,
-            },
-        ];
+        socket.emit("chat event", {
+            roomName: hashedRoomKey,
+            username: encryptedUsername,
+            message: encryptedMessage,
+        });
 
         message = "";
-
     };
 
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -88,8 +91,47 @@
 
         const apiUrl = API_URL;
 
-        console.log(apiUrl)
+        // encrypt username
+        const encryptedUsername: { iv: string; data: string } = await encrypt(
+            enc.encode(username),
+            keys
+        );
+
+        // send join
+        socket.emit("join", {
+            roomName: hashedRoomKey,
+            username: encryptedUsername,
+        }); // Emit the join event
+
+        socket.on("chat response", messageHandler);
+        // socket.on('join response', joinHandler);
+        // socket.on('leave response', leaveHandler);
+        // socket.on('user count', userCountHandler);
     });
+
+    onDestroy(() => {
+        socket.off("chat response");
+        // socket.off('file response');
+        // socket.off('join response')
+        // socket.off('leave response');
+        // socket.off('user count');
+    });
+
+    interface messageFromServer {
+        username: { iv: string; data: string };
+        message: { iv: string; data: string };
+    }
+
+    const messageHandler = async (msg: messageFromServer) => {
+        const parsedData: encryptedMessageData = {
+            username: msg.username,
+            content: msg.message,
+            isSystem: false,
+            requiresDecryption: true,
+        };
+
+        messages = [...messages, parsedData];
+    };
 </script>
 
 <div class="container">
@@ -105,7 +147,7 @@
     </div>
     <div class="chatBox">
         {#each messages as message}
-            <Message {...message} />
+            <Message {keys} {...message} />
         {/each}
     </div>
     <div class="messageBox">

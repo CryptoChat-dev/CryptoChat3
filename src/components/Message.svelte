@@ -1,31 +1,57 @@
 <script lang="ts">
-    export let username: string = "";
+    import { decrypt } from "src/utils/aes";
 
-    export let content: string = "";
+    import { onMount } from "svelte";
+
+    export let username: { iv: string; data: string };
+
+    export let content: { iv: string; data: string };
 
     export let isSystem: boolean = false;
+
+    export let keys: CryptoKey;
 
     export let requiresDecryption: boolean = true;
 
     const received: string = new Date().toLocaleTimeString();
+
+    let decryptedMessage: string;
+
+    let decryptedUsername: string;
+
+    const dec = new TextDecoder();
+
+    onMount(async () => {
+        if (!username || !content) {
+            return;
+        }
+
+        // decrypt username
+        decryptedUsername = dec.decode(await decrypt(username, keys));
+
+        // decrypt content
+        decryptedMessage = dec.decode(await decrypt(content, keys));
+    });
 </script>
 
 <div class="container">
-    {#if isSystem}
-        <p style="color: gray; font-size: .75rem; margin: 0;">
-            ONLY YOU CAN SEE THIS
-        </p>
+    {#if decryptedMessage && decryptedUsername}
+        {#if isSystem}
+            <p style="color: gray; font-size: .75rem; margin: 0;">
+                ONLY YOU CAN SEE THIS
+            </p>
+        {/if}
+        <div style="display: flex; align-items: center;">
+            <p
+                class="username"
+                style={`color: ${isSystem ? "#C081FF" : "var(--txt-color)"}`}
+            >
+                {decryptedUsername}
+            </p>
+            <p class="timestamp">{received}</p>
+        </div>
+        <p class="content">{decryptedMessage}</p>
     {/if}
-    <div style="display: flex; align-items: center;">
-        <p
-            class="username"
-            style={`color: ${isSystem ? "#C081FF" : "var(--txt-color)"}`}
-        >
-            {username}
-        </p>
-        <p class="timestamp">{received}</p>
-    </div>
-    <p class="content">{content}</p>
 </div>
 
 <style lang="scss">
