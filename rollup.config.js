@@ -12,7 +12,6 @@ import { config } from "dotenv";
 import path from "path";
 import alias from "@rollup/plugin-alias";
 
-
 config();
 
 const projectRootDir = path.resolve(__dirname);
@@ -97,19 +96,27 @@ export default {
         // If we're building for production (npm run build
         // instead of npm run dev), minify
         production && terser(),
-        
+
         replace({
-            // 2 level deep object should be stringify
             isProd: production,
-            API_URL: JSON.stringify(process.env.API_URL),
+            values: {
+                "process.env.API_URL": JSON.stringify(process.env.API_URL),
+            },
+            preventAssignment: true,
         }),
-        
+
         alias({
             entries: [
-                { find: "@components", replacement: path.resolve(projectRootDir, "src/components") },
-                { find: "@utils", replacement: path.resolve(projectRootDir, "src/utils") },
-            ]
-        })
+                {
+                    find: "@components",
+                    replacement: path.resolve(projectRootDir, "src/components"),
+                },
+                {
+                    find: "@utils",
+                    replacement: path.resolve(projectRootDir, "src/utils"),
+                },
+            ],
+        }),
     ],
     watch: {
         clearScreen: false,
