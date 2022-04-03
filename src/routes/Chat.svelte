@@ -35,7 +35,6 @@
         if (!username || !roomKey || !message) {
             return;
         }
-        console.log("sending...");
 
         // process commands
         switch (message) {
@@ -55,6 +54,11 @@
                         requiresDecryption: false,
                     },
                 ];
+                message = "";
+                return;
+            case "/clear":
+                messages = [];
+                message = "";
                 return;
         }
 
@@ -71,9 +75,9 @@
         );
 
         socket.emit("chat event", {
-            "roomName": hashedRoomKey,
-            "username": encryptedUsername,
-            "message": encryptedMessage,
+            roomName: hashedRoomKey,
+            username: encryptedUsername,
+            message: encryptedMessage,
         });
 
         message = "";
@@ -105,13 +109,13 @@
 
         // send join
         socket.emit("join", {
-            "roomName": hashedRoomKey,
-            "username": encryptedUsername,
+            roomName: hashedRoomKey,
+            username: encryptedUsername,
         }); // Emit the join event
 
         socket.on("chat response", messageHandler);
         socket.on("join response", joinHandler);
-        socket.on('leave response', leaveHandler);
+        socket.on("leave response", leaveHandler);
         // socket.on('user count', userCountHandler);
 
         // do something every 10s
@@ -124,14 +128,11 @@
         socket.off("chat response");
         // socket.off('file response');
         socket.off("join response");
-        socket.off('leave response');
+        socket.off("leave response");
         // socket.off('user count');
     });
 
-    const leaveHandler = async (msg: {
-        id: string;
-        username: string;
-    }) => {
+    const leaveHandler = async (msg: { id: string; username: string }) => {
         // parse message
         const { id, username } = msg;
 
@@ -158,7 +159,7 @@
                 requiresDecryption: false,
             },
         ];
-    }
+    };
 
     const joinHandler = async (msg: {
         username: { iv: string; data: string };
