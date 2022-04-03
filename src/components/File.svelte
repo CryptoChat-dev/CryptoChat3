@@ -4,6 +4,7 @@
     export let username: string;
     export let id: string;
     export let iv: string;
+    export let name: string;
 
     export let keys: CryptoKey;
 
@@ -39,7 +40,7 @@
     </div>
     <p class="content">
         I've shared a file with you! <a on:click={doDecrypt}
-            >Click to download</a
+            >Download {name}</a
         >
     </p>
 </div>

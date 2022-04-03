@@ -40,6 +40,7 @@
         username: string;
         id: string;
         iv: string;
+        name: string;
     }
 
     let messages: eventData[] = [];
@@ -285,11 +286,17 @@
                 const encryptedUsername: { iv: string; data: string } =
                     await encrypt(enc.encode(username), keys);
 
+                const encryptedName: { iv: string; data: string } = await encrypt(
+                    enc.encode(file.name),
+                    keys
+                );
+
                 socket.emit("file event", {
-                    roomName: hashedRoomKey,
-                    username: encryptedUsername,
-                    id: response.uuid,
-                    iv: encryptedFileData.iv,
+                    "roomName": hashedRoomKey,
+                    "username": encryptedUsername,
+                    "id": response.uuid,
+                    "iv": encryptedFileData.iv,
+                    "name": encryptedName,
                 });
             } else {
                 alert("Unable to upload file.");
@@ -301,17 +308,22 @@
         username: { iv: string; data: string };
         iv: string;
         id: string;
+        name: { iv: string; data: string };
     }) => {
         // decrypt username
         const decryptedUsername: string = dec.decode(
             await decrypt(msg.username, keys)
         );
 
+        const decryptedName: string = dec.decode(
+            await decrypt({ iv: msg.name.iv, data: msg.name.data }, keys)
+        );
+
         messages = [
             ...messages,
             {
                 type: "file",
-                data: { username: decryptedUsername, id: msg.id, iv: msg.iv },
+                data: { username: decryptedUsername, id: msg.id, iv: msg.iv, name: decryptedName },
             },
         ];
     };
