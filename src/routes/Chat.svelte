@@ -1,5 +1,6 @@
 <script lang="ts">
     import { SHA512 } from "jscrypto/es6/SHA512";
+
     import Message from "@components/Message.svelte";
 
     import FaArrowAltCircleUp from "svelte-icons/fa/FaArrowAltCircleUp.svelte";
@@ -9,6 +10,8 @@
     import { onDestroy, onMount } from "svelte";
 
     import { socket } from "@utils/socket.ts";
+
+    import switchTheme from "@utils/theme.ts";
 
     // get username and roomKey from localStorage
     const username: string = window.localStorage.getItem("username");
@@ -218,6 +221,11 @@
             roomName: hashedRoomKey,
         });
     };
+
+    document.documentElement.setAttribute(
+        "data-theme",
+        window.localStorage.getItem("theme")
+    );
 </script>
 
 <div class="container">
@@ -239,7 +247,8 @@
     </div>
     <div class="messageBox">
         <input
-            on:keydown={handleKeyDown}
+        style="color: var(--text-color);"
+        on:keydown={handleKeyDown}
             bind:value={message}
             class="messageInput override"
             placeholder="What's up?"
@@ -249,7 +258,7 @@
         </div>
     </div>
     <div class="buttons">
-        <button>Theme</button>
+        <button on:click={switchTheme}>Theme</button>
         <button on:click={doLeave}>Leave</button>
     </div>
 </div>
@@ -262,18 +271,18 @@
 
         @media only screen and (max-width: 800px) {
             margin-bottom: 2rem;
-            padding-right: .5rem;
-            padding-left: .5rem;
+            padding-right: 0.5rem;
+            padding-left: 0.5rem;
         }
     }
 
     .inputIcon {
-        color: white;
         padding: 0.5rem;
         border-radius: 300px;
         display: flex;
         justify-content: center;
         align-items: center;
+        color: var(--text-color);
     }
 
     .messageBox {

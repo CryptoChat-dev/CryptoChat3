@@ -3,6 +3,8 @@
 
     import { getDicewareWords, scorePassword } from "@utils/password.ts";
 
+    import switchTheme from "@utils/theme.ts";
+
     import KeyAlert from "@components/KeyAlert.svelte";
 
     import UnsupportedAlert from "@components/UnsupportedAlert.svelte";
@@ -14,6 +16,10 @@
     let showAlert: boolean = false;
 
     const doJoin = async (bypass: boolean = false) => {
+        if (!username || !roomKey) {
+            return;
+        }
+        
         const passwordScore: number = await scorePassword(roomKey);
 
         if (passwordScore < 85 && !bypass) {
@@ -26,6 +32,11 @@
         window.localStorage.setItem("roomKey", roomKey);
         window.location.href = "/chat";
     };
+
+    document.documentElement.setAttribute(
+        "data-theme",
+        window.localStorage.getItem("theme")
+    );
 </script>
 
 {#if !window.crypto || !window.crypto.subtle}
@@ -67,8 +78,10 @@
             <GiPerspectiveDiceSixFacesTwo />
         </div>
     </div>
-
-    <button on:click={() => doJoin(false)}>Join</button>
+    <div style="display: flex; justify-content: space-between">
+        <button on:click={switchTheme}>Theme</button>
+        <button on:click={() => doJoin(false)}>Join</button>
+    </div>
 </div>
 
 <style lang="scss">

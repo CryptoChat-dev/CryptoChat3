@@ -11,6 +11,19 @@
     --date-color: rgb(139, 139, 139);
 }
 
+[data-theme='light'] {
+    --main-background: #e0e0e0;
+    --first-box-shadow: #bebebe;
+    --second-box-shadow: #ffffff;
+    --inside-box-shadow-one: #cbced1;
+    --inside-box-shadow-two: #ffffff;
+    --txt-color: black;
+    --bttn-color: white;
+    --modal-color: #b3b3b3;
+    --decrypt-color: blue;
+    --date-color: rgb(104, 104, 104);
+}
+
 html, body {
 	position: relative;
 	width: 100%;
