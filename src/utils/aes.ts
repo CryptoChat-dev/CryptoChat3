@@ -1,5 +1,10 @@
 import { random } from "@lukeed/csprng/browser";
-import { arrayBufferToBase64, base64ToArrayBuffer, base64ToUint8Array, uint8ArrayToBase64 } from "./b64";
+import {
+    arrayBufferToBase64,
+    base64ToArrayBuffer,
+    base64ToUint8Array,
+    uint8ArrayToBase64,
+} from "./b64";
 
 export const encrypt = async (data: ArrayBuffer, key: CryptoKey) => {
     const iv: Uint8Array = random(96);
@@ -20,7 +25,29 @@ export const encrypt = async (data: ArrayBuffer, key: CryptoKey) => {
     };
 };
 
-export const decrypt = async (data: { iv: string; data: string }, key: CryptoKey) => {
+export const encryptData = async (data: ArrayBuffer, key: CryptoKey) => {
+    const iv: Uint8Array = random(96);
+
+    const encryptedData: ArrayBuffer = await crypto.subtle.encrypt(
+        {
+            name: "AES-GCM",
+            iv,
+            length: 256,
+        },
+        key,
+        data
+    );
+
+    return {
+        iv: uint8ArrayToBase64(iv),
+        data: encryptedData,
+    };
+};
+
+export const decrypt = async (
+    data: { iv: string; data: string },
+    key: CryptoKey
+) => {
     const iv: Uint8Array = base64ToUint8Array(data.iv);
     const encryptedData: ArrayBuffer = base64ToArrayBuffer(data.data);
 
@@ -32,6 +59,25 @@ export const decrypt = async (data: { iv: string; data: string }, key: CryptoKey
         },
         key,
         encryptedData
+    );
+
+    return decryptedData;
+};
+
+export const decryptData = async (
+    data: { iv: string; data: ArrayBuffer },
+    key: CryptoKey
+) => {
+    const iv: Uint8Array = base64ToUint8Array(data.iv);
+
+    const decryptedData: ArrayBuffer = await crypto.subtle.decrypt(
+        {
+            name: "AES-GCM",
+            iv,
+            length: 256,
+        },
+        key,
+        data.data
     );
 
     return decryptedData;

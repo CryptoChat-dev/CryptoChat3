@@ -13,6 +13,11 @@
 
     import switchTheme from "@utils/theme.ts";
 
+    import FaCloudUploadAlt from "svelte-icons/fa/FaCloudUploadAlt.svelte";
+    import { encryptData } from "src/utils/aes";
+
+    import FileMessage from "@components/File.svelte";
+
     // get username and roomKey from localStorage
     const username: string = window.localStorage.getItem("username");
     const roomKey: string = window.localStorage.getItem("roomKey");
@@ -26,7 +31,18 @@
         requiresDecryption?: boolean;
     }
 
-    let messages: encryptedMessageData[] = [];
+    interface eventData {
+        type: string;
+        data: encryptedMessageData | encryptedFileData;
+    }
+
+    interface encryptedFileData {
+        username: string;
+        id: string;
+        iv: string;
+    }
+
+    let messages: eventData[] = [];
 
     // hash the roomKey with SHA-512
     const hashedRoomKey: string = SHA512.hash(roomKey).toString();
@@ -48,13 +64,16 @@
                 messages = [
                     ...messages,
                     {
-                        isSystem: true,
-                        username: { iv: "", data: "System" },
-                        content: {
-                            iv: "",
-                            data: `Username: ${username}\n\nRoom Key: ${roomKey}\n\nHashed Room Key: ${hashedRoomKey}`,
+                        type: "message",
+                        data: {
+                            isSystem: true,
+                            username: { iv: "", data: "System" },
+                            content: {
+                                iv: "",
+                                data: `Username: ${username}\n\nRoom Key: ${roomKey}\n\nHashed Room Key: ${hashedRoomKey}`,
+                            },
+                            requiresDecryption: false,
                         },
-                        requiresDecryption: false,
                     },
                 ];
                 message = "";
@@ -117,6 +136,7 @@
         socket.on("chat response", messageHandler);
         socket.on("join response", joinHandler);
         socket.on("leave response", leaveHandler);
+        socket.on("file response", fileHandler);
         // socket.on('user count', userCountHandler);
 
         // do something every 10s
@@ -127,7 +147,7 @@
 
     onDestroy(() => {
         socket.off("chat response");
-        // socket.off('file response');
+        socket.off("file response");
         socket.off("join response");
         socket.off("leave response");
         // socket.off('user count');
@@ -151,13 +171,16 @@
         messages = [
             ...messages,
             {
-                isSystem: true,
-                username: { iv: "", data: "System" },
-                content: {
-                    iv: "",
-                    data: `${decryptedUsername} (${id}) has left the chat.`,
+                type: "message",
+                data: {
+                    isSystem: true,
+                    username: { iv: "", data: "System" },
+                    content: {
+                        iv: "",
+                        data: `${decryptedUsername} (${id}) has left the chat.`,
+                    },
+                    requiresDecryption: false,
                 },
-                requiresDecryption: false,
             },
         ];
     };
@@ -175,15 +198,18 @@
         messages = [
             ...messages,
             {
-                isSystem: true,
-                username: { iv: "", data: "System" },
-                content: {
-                    iv: "",
-                    data: `${dec.decode(decryptedUsername)} (${
-                        msg.id
-                    }) has joined the room.`,
+                type: "message",
+                data: {
+                    isSystem: true,
+                    username: { iv: "", data: "System" },
+                    content: {
+                        iv: "",
+                        data: `${dec.decode(decryptedUsername)} (${
+                            msg.id
+                        }) has joined the room.`,
+                    },
+                    requiresDecryption: false,
                 },
-                requiresDecryption: false,
             },
         ];
     };
@@ -203,7 +229,7 @@
             requiresDecryption: true,
         };
 
-        messages = [...messages, parsedData];
+        messages = [...messages, { type: "message", data: parsedData }];
         // wait 5 ms because the DOM is not ready yet
         await new Promise((resolve) => setTimeout(resolve, 5));
         messageRef.scrollTop =
@@ -226,6 +252,69 @@
         "data-theme",
         window.localStorage.getItem("theme")
     );
+
+    let input: HTMLInputElement;
+
+    const doFileUpload = async (e: InputEvent) => {
+        // get file from input
+        const file: File = (e.target as HTMLInputElement).files[0];
+
+        // get file data
+        let reader = new FileReader();
+
+        reader.readAsArrayBuffer(file);
+
+        reader.onload = async () => {
+            const fileData: ArrayBuffer = reader.result as ArrayBuffer;
+
+            // encrypt file data
+            const encryptedFileData: { iv: string; data: ArrayBuffer } =
+                await encryptData(fileData, keys);
+
+            const formData: FormData = new FormData();
+            formData.append("efile", new Blob([encryptedFileData.data]));
+
+            const request = await fetch(`${process.env.API_URL}/upload`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (request.status === 200) {
+                const response: { uuid: string } = await request.json();
+
+                const encryptedUsername: { iv: string; data: string } =
+                    await encrypt(enc.encode(username), keys);
+
+                socket.emit("file event", {
+                    roomName: hashedRoomKey,
+                    username: encryptedUsername,
+                    id: response.uuid,
+                    iv: encryptedFileData.iv,
+                });
+            } else {
+                alert("Unable to upload file.");
+            }
+        };
+    };
+
+    const fileHandler = async (msg: {
+        username: { iv: string; data: string };
+        iv: string;
+        id: string;
+    }) => {
+        // decrypt username
+        const decryptedUsername: string = dec.decode(
+            await decrypt(msg.username, keys)
+        );
+
+        messages = [
+            ...messages,
+            {
+                type: "file",
+                data: { username: decryptedUsername, id: msg.id, iv: msg.iv },
+            },
+        ];
+    };
 </script>
 
 <div class="container">
@@ -241,18 +330,25 @@
     </div>
     <div class="chatBox" bind:this={messageRef}>
         {#each messages as message}
-            <!-- group messages depending on author -->
-            <Message {keys} {...message} />
+            {#if message.type === "message"}
+                <!-- group messages depending on author -->
+                <Message {keys} {...message.data} />
+            {:else if message.type === "file"}
+                <FileMessage {keys} {...message.data} />
+            {/if}
         {/each}
     </div>
     <div class="messageBox">
         <input
-        style="color: var(--text-color);"
-        on:keydown={handleKeyDown}
+            style="color: var(--text-color);"
+            on:keydown={handleKeyDown}
             bind:value={message}
             class="messageInput override"
             placeholder="What's up?"
         />
+        <div class="inputIcon icon" on:click={() => input.click()}>
+            <FaCloudUploadAlt />
+        </div>
         <div class="inputIcon icon" on:click={doSend}>
             <FaArrowAltCircleUp />
         </div>
@@ -262,6 +358,13 @@
         <button on:click={doLeave}>Leave</button>
     </div>
 </div>
+
+<input
+    type="file"
+    style="display: none;"
+    on:change={doFileUpload}
+    bind:this={input}
+/>
 
 <style lang="scss">
     .buttons {
