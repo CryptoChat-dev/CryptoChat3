@@ -43,14 +43,18 @@
                 console.log("username:", username);
                 console.log("roomKey:", roomKey);
                 console.log("hashedRoomKey:", hashedRoomKey);
-                // messages = [
-                //     ...messages,
-                //     {
-                //         isSystem: true,
-                //         username: "System",
-                //         content: `Username: ${username}\n\nRoom Key: ${roomKey}\n\nHashed Room Key: ${hashedRoomKey}`,
-                //     },
-                // ];
+                messages = [
+                    ...messages,
+                    {
+                        isSystem: true,
+                        username: { iv: "", data: "System" },
+                        content: {
+                            iv: "",
+                            data: `Username: ${username}\n\nRoom Key: ${roomKey}\n\nHashed Room Key: ${hashedRoomKey}`,
+                        },
+                        requiresDecryption: false,
+                    },
+                ];
                 return;
         }
 
@@ -67,9 +71,9 @@
         );
 
         socket.emit("chat event", {
-            roomName: hashedRoomKey,
-            username: encryptedUsername,
-            message: encryptedMessage,
+            "roomName": hashedRoomKey,
+            "username": encryptedUsername,
+            "message": encryptedMessage,
         });
 
         message = "";
@@ -101,13 +105,13 @@
 
         // send join
         socket.emit("join", {
-            roomName: hashedRoomKey,
-            username: encryptedUsername,
+            "roomName": hashedRoomKey,
+            "username": encryptedUsername,
         }); // Emit the join event
 
         socket.on("chat response", messageHandler);
         socket.on("join response", joinHandler);
-        // socket.on('leave response', leaveHandler);
+        socket.on('leave response', leaveHandler);
         // socket.on('user count', userCountHandler);
 
         // do something every 10s
@@ -120,16 +124,51 @@
         socket.off("chat response");
         // socket.off('file response');
         socket.off("join response");
-        // socket.off('leave response');
+        socket.off('leave response');
         // socket.off('user count');
     });
+
+    const leaveHandler = async (msg: {
+        id: string;
+        username: string;
+    }) => {
+        // parse message
+        const { id, username } = msg;
+
+        const usernameJson: {
+            iv: string;
+            data: string;
+        } = JSON.parse(username);
+
+        // decrypt username
+        const decryptedUsername: string = dec.decode(
+            await decrypt(usernameJson, keys)
+        );
+
+        // add message
+        messages = [
+            ...messages,
+            {
+                isSystem: true,
+                username: { iv: "", data: "System" },
+                content: {
+                    iv: "",
+                    data: `${decryptedUsername} (${id}) has left the chat.`,
+                },
+                requiresDecryption: false,
+            },
+        ];
+    }
 
     const joinHandler = async (msg: {
         username: { iv: string; data: string };
         id: string;
     }) => {
         // decrypt username
-        const decryptedUsername: ArrayBuffer = await decrypt(msg.username, keys);
+        const decryptedUsername: ArrayBuffer = await decrypt(
+            msg.username,
+            keys
+        );
 
         messages = [
             ...messages,
@@ -138,7 +177,9 @@
                 username: { iv: "", data: "System" },
                 content: {
                     iv: "",
-                    data: `${dec.decode(decryptedUsername)} (${msg.id}) has joined the room.`,
+                    data: `${dec.decode(decryptedUsername)} (${
+                        msg.id
+                    }) has joined the room.`,
                 },
                 requiresDecryption: false,
             },
@@ -192,7 +233,7 @@
         <h2 style="margin: 0;">A stunning encrypted webapp.</h2>
     </div>
     <div class="chatBox" bind:this={messageRef}>
-        {#each messages as message (message.content.iv)}
+        {#each messages as message}
             <!-- group messages depending on author -->
             <Message {keys} {...message} />
         {/each}
