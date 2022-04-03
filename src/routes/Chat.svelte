@@ -1,14 +1,14 @@
 <script lang="ts">
     import { SHA512 } from "jscrypto/es6/SHA512";
-    import Message from "../components/Message.svelte";
+    import Message from "@components/Message.svelte";
 
     import FaArrowAltCircleUp from "svelte-icons/fa/FaArrowAltCircleUp.svelte";
 
-    import { decrypt, deriveKeypair, encrypt } from "../utils/aes";
+    import { decrypt, deriveKeypair, encrypt } from "@utils/aes.ts";
 
     import { onDestroy, onMount } from "svelte";
 
-    import { socket } from "../utils/socket";
+    import { socket } from "@utils/socket.ts";
 
     // get username and roomKey from localStorage
     const username: string = window.localStorage.getItem("username");

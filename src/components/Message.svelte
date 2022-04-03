@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { decrypt } from "src/utils/aes";
+    import { decrypt } from "@utils/aes.ts";
 
     import { onMount } from "svelte";
 

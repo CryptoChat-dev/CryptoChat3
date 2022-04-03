@@ -9,8 +9,13 @@ import css from "rollup-plugin-css-only";
 import sass from "sass";
 import replace from "@rollup/plugin-replace";
 import { config } from "dotenv";
+import path from "path";
+import alias from "@rollup/plugin-alias";
+
 
 config();
+
+const projectRootDir = path.resolve(__dirname);
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -92,11 +97,19 @@ export default {
         // If we're building for production (npm run build
         // instead of npm run dev), minify
         production && terser(),
+        
         replace({
             // 2 level deep object should be stringify
             isProd: production,
             API_URL: JSON.stringify(process.env.API_URL),
         }),
+        
+        alias({
+            entries: [
+                { find: "@components", replacement: path.resolve(projectRootDir, "src/components") },
+                { find: "@utils", replacement: path.resolve(projectRootDir, "src/utils") },
+            ]
+        })
     ],
     watch: {
         clearScreen: false,

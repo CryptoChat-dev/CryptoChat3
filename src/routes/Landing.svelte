@@ -1,11 +1,11 @@
 <script lang="ts">
     import GiPerspectiveDiceSixFacesTwo from "svelte-icons/gi/GiPerspectiveDiceSixFacesTwo.svelte";
 
-    import { getDicewareWords, scorePassword } from "../utils/password";
+    import { getDicewareWords, scorePassword } from "@utils/password.ts";
 
-    import KeyAlert from "../components/KeyAlert.svelte";
+    import KeyAlert from "@components/KeyAlert.svelte";
 
-    import UnsupportedAlert from "../components/UnsupportedAlert.svelte";
+    import UnsupportedAlert from "@components/UnsupportedAlert.svelte";
 
     let username: string = "";
 
