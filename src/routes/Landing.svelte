@@ -1,18 +1,37 @@
 <script lang="ts">
     import GiPerspectiveDiceSixFacesTwo from "svelte-icons/gi/GiPerspectiveDiceSixFacesTwo.svelte";
 
-    import { getDicewareWords } from "../utils/password";
+    import { getDicewareWords, scorePassword } from "../utils/password";
+
+    import KeyAlert from "../components/KeyAlert.svelte";
 
     let username: string = "";
 
     let roomKey: string = "";
 
-    const doJoin = async () => {
+    let showAlert: boolean = false;
+
+    const doJoin = async (bypass: boolean = false) => {
+        const passwordScore: number = await scorePassword(roomKey);
+
+        if (passwordScore < 85 && !bypass) {
+            // insecure
+            showAlert = true;
+            return;
+        }
+
         window.localStorage.setItem("username", username);
         window.localStorage.setItem("roomKey", roomKey);
         window.location.href = "/chat";
     };
 </script>
+
+{#if showAlert}
+    <KeyAlert
+        dismiss={() => (showAlert = false)}
+        override={() => doJoin(true)}
+    />
+{/if}
 
 <div class="container">
     <div class="imageParent">
@@ -43,7 +62,7 @@
         </div>
     </div>
 
-    <button on:click={doJoin}>Join</button>
+    <button on:click={() => doJoin(false)}>Join</button>
 </div>
 
 <style lang="scss">

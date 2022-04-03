@@ -90,3 +90,7 @@ input:disabled {
 h2 {
     font-weight: normal;
 }
+
+.danger {
+    background-color: rgb(206, 0, 0);
+}
