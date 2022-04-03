@@ -5,6 +5,8 @@
 
     import KeyAlert from "../components/KeyAlert.svelte";
 
+    import UnsupportedAlert from "../components/UnsupportedAlert.svelte";
+
     let username: string = "";
 
     let roomKey: string = "";
@@ -25,6 +27,10 @@
         window.location.href = "/chat";
     };
 </script>
+
+{#if !window.crypto || !window.crypto.subtle}
+    <UnsupportedAlert />
+{/if}
 
 {#if showAlert}
     <KeyAlert

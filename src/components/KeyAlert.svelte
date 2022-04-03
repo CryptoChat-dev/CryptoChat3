@@ -4,9 +4,9 @@
 </script>
 
 <!-- The Modal -->
-<div class="modal">
+<div class="dialog__modal">
     <!-- Modal content -->
-    <div class="content">
+    <div class="dialog__content">
         <h1>Weak Key</h1>
         <p>
             The room key you entered is insecure and could leave your chats
@@ -22,34 +22,3 @@
         </div>
     </div>
 </div>
-
-<style lang="scss">
-    /* The Modal (background) */
-    .modal {
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgb(0, 0, 0);
-        background-color: rgba(0, 0, 0, 0.4);
-        display: flex;
-        justify-content: center;
-    }
-
-    /* Modal Content */
-    .content {
-        background-color: var(--modal-color);
-        margin: auto;
-        padding: 1rem;
-
-        width: 20rem;
-        border-radius: 10px;
-
-        color: var(--txt-color);
-        margin-top: 20%;
-        text-align: center;
-    }
-</style>
