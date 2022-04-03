@@ -259,6 +259,12 @@
         display: flex;
         justify-content: space-between;
         margin-top: 1rem;
+
+        @media only screen and (max-width: 800px) {
+            margin-bottom: 2rem;
+            padding-right: .5rem;
+            padding-left: .5rem;
+        }
     }
 
     .inputIcon {
@@ -310,6 +316,13 @@
         display: flex;
         flex-direction: column;
         padding: 1.5rem 2.5rem 1.5rem 2.5rem;
+
+        @media only screen and (max-width: 800px) {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            padding: 0;
+        }
     }
 
     .infoBar {
@@ -320,6 +333,9 @@
 
     .keyInfo {
         display: flex;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
     }
 
     .roomKey {
@@ -341,12 +357,12 @@
     }
 
     .chatBox {
-        /* height: 40%; */
         height: 20rem;
         border-radius: 25px;
         box-shadow: inset 8px 8px 8px var(--inside-box-shadow-one),
             inset -8px -8px 8px var(--inside-box-shadow-two);
-        width: 98%;
+        width: 100%;
+        box-sizing: border-box;
         border: none;
         outline: none;
         background: none;
@@ -358,5 +374,9 @@
         display: flex;
         flex-direction: column;
         margin-top: 1rem;
+
+        @media only screen and (max-width: 800px) {
+            height: 100%;
+        }
     }
 </style>
