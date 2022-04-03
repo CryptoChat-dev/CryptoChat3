@@ -10,6 +10,7 @@
     const doJoin = async () => {
         window.localStorage.setItem("username", username);
         window.localStorage.setItem("roomKey", roomKey);
+        window.location.href = "/chat";
     };
 </script>
 
@@ -46,7 +47,6 @@
 </div>
 
 <style lang="scss">
-    
     .imageParent {
         display: flex;
         justify-content: center;

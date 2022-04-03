@@ -99,8 +99,6 @@
         // derive keypair
         keys = await deriveKeypair(roomKey, hashedRoomKey);
 
-        const apiUrl = API_URL;
-
         // encrypt username
         const encryptedUsername: { iv: string; data: string } = await encrypt(
             enc.encode(username),
