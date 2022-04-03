@@ -4,7 +4,7 @@
 
     import FaArrowAltCircleUp from "svelte-icons/fa/FaArrowAltCircleUp.svelte";
 
-    import { deriveKeypair, encrypt } from "../utils/aes";
+    import { decrypt, deriveKeypair, encrypt } from "../utils/aes";
 
     import { onDestroy, onMount } from "svelte";
 
@@ -29,11 +29,13 @@
     const hashedRoomKey: string = SHA512.hash(roomKey).toString();
 
     const enc = new TextEncoder();
+    const dec = new TextDecoder();
 
     const doSend = async () => {
         if (!username || !roomKey || !message) {
             return;
         }
+        console.log("sending...");
 
         // process commands
         switch (message) {
@@ -104,18 +106,44 @@
         }); // Emit the join event
 
         socket.on("chat response", messageHandler);
-        // socket.on('join response', joinHandler);
+        socket.on("join response", joinHandler);
         // socket.on('leave response', leaveHandler);
         // socket.on('user count', userCountHandler);
+
+        // do something every 10s
+        setInterval(() => {
+            doKeepAlive();
+        }, 10000);
     });
 
     onDestroy(() => {
         socket.off("chat response");
         // socket.off('file response');
-        // socket.off('join response')
+        socket.off("join response");
         // socket.off('leave response');
         // socket.off('user count');
     });
+
+    const joinHandler = async (msg: {
+        username: { iv: string; data: string };
+        id: string;
+    }) => {
+        // decrypt username
+        const decryptedUsername: ArrayBuffer = await decrypt(msg.username, keys);
+
+        messages = [
+            ...messages,
+            {
+                isSystem: true,
+                username: { iv: "", data: "System" },
+                content: {
+                    iv: "",
+                    data: `${dec.decode(decryptedUsername)} (${msg.id}) has joined the room.`,
+                },
+                requiresDecryption: false,
+            },
+        ];
+    };
 
     interface messageFromServer {
         username: { iv: string; data: string };
@@ -135,7 +163,20 @@
         messages = [...messages, parsedData];
         // wait 5 ms because the DOM is not ready yet
         await new Promise((resolve) => setTimeout(resolve, 5));
-        messageRef.scrollTop = (messageRef.scrollHeight+messageRef.clientHeight);
+        messageRef.scrollTop =
+            messageRef.scrollHeight + messageRef.clientHeight;
+    };
+
+    const doLeave = async () => {
+        window.localStorage.clear();
+        // go to landing page
+        window.location.href = "/";
+    };
+
+    const doKeepAlive = async () => {
+        socket.emit("keepalive", {
+            roomName: hashedRoomKey,
+        });
     };
 </script>
 
@@ -169,7 +210,7 @@
     </div>
     <div class="buttons">
         <button>Theme</button>
-        <button>Leave</button>
+        <button on:click={doLeave}>Leave</button>
     </div>
 </div>
 
@@ -270,7 +311,7 @@
         outline: none;
         background: none;
         font-size: 18px;
-        padding: 20px 10px 20px 9px;
+        padding: 20px;
         overflow-y: auto;
         overflow-x: hidden;
         color: var(--txt-color);

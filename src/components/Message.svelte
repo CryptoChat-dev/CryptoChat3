@@ -26,6 +26,12 @@
             return;
         }
 
+        if (!requiresDecryption) {
+            decryptedUsername = username.data;
+            decryptedMessage = content.data;
+            return;
+        }
+
         // decrypt username
         decryptedUsername = dec.decode(await decrypt(username, keys));
 
