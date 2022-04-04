@@ -15,6 +15,12 @@
 
     const doDecrypt = async () => {
         const res = await fetch(dlUrl);
+
+        if (res.status !== 200) {
+            alert("Unable to download and decrypt file.");
+            return;
+        }
+
         // get arraybuffer
         const arrayBuffer = await res.arrayBuffer();
 
@@ -24,14 +30,11 @@
         const blob = new Blob([decrypted], {
             type,
         });
-
-        // assign name to blob
-
         
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "file";
+        a.download = name;
         a.click();
     };
 </script>
