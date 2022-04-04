@@ -47,13 +47,18 @@
         <p class="timestamp">{received}</p>
     </div>
     <p class="content">
-        I've shared a file with you! <a on:click={doDecrypt}
-            >Download {name}</a
+        I've shared a file with you! <p class="download" on:click={doDecrypt}
+            >Download {name}</p
         >
     </p>
 </div>
 
 <style lang="scss">
+    .download {
+        color: rgb(0,100,200);
+        text-decoration: none;
+    }
+
     .username {
         font-size: 1.25rem;
         font-weight: bold;
