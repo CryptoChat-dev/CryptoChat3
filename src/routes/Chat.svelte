@@ -14,10 +14,10 @@
     import switchTheme from "@utils/theme.ts";
 
     import FaCloudUploadAlt from "svelte-icons/fa/FaCloudUploadAlt.svelte";
-    import { decryptData, encryptData } from "src/utils/aes";
+    import { encryptData } from "src/utils/aes";
 
     import FileMessage from "@components/File.svelte";
-    import { arrayBufferToBase64, base64ToArrayBuffer } from "src/utils/b64";
+import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
 
     // get username and roomKey from localStorage
     const username: string = window.localStorage.getItem("username");
@@ -49,7 +49,15 @@
     let messages: eventData[] = [];
 
     // hash the roomKey with SHA-512
-    const hashedRoomKey: string = SHA512.hash(roomKey).toString();
+    let hashedRoomKey: string;
+    let rawHashedRoomKey: Word32Array;
+    rawHashedRoomKey = SHA512.hash(roomKey);
+
+    for (let i = 0; i < 500; i++) {
+        rawHashedRoomKey = SHA512.hash(rawHashedRoomKey);
+    }
+
+    hashedRoomKey = rawHashedRoomKey.toString();
 
     const enc = new TextEncoder();
     const dec = new TextDecoder();
