@@ -20,8 +20,8 @@ export const encrypt = async (data: ArrayBuffer, key: CryptoKey) => {
     );
 
     return {
-        iv: uint8ArrayToBase64(iv),
-        data: arrayBufferToBase64(encryptedData),
+        iv: await uint8ArrayToBase64(iv),
+        data: await arrayBufferToBase64(encryptedData),
     };
 };
 
@@ -39,7 +39,7 @@ export const encryptData = async (data: ArrayBuffer, key: CryptoKey) => {
     );
 
     return {
-        iv: uint8ArrayToBase64(iv),
+        iv: await uint8ArrayToBase64(iv),
         data: encryptedData,
     };
 };
@@ -48,8 +48,8 @@ export const decrypt = async (
     data: { iv: string; data: string },
     key: CryptoKey
 ) => {
-    const iv: Uint8Array = base64ToUint8Array(data.iv);
-    const encryptedData: ArrayBuffer = base64ToArrayBuffer(data.data);
+    const iv: Uint8Array = await base64ToUint8Array(data.iv);
+    const encryptedData: ArrayBuffer = await base64ToArrayBuffer(data.data);
 
     const decryptedData: ArrayBuffer = await crypto.subtle.decrypt(
         {
@@ -68,7 +68,7 @@ export const decryptData = async (
     data: { iv: string; data: ArrayBuffer },
     key: CryptoKey
 ) => {
-    const iv: Uint8Array = base64ToUint8Array(data.iv);
+    const iv: Uint8Array = await base64ToUint8Array(data.iv);
 
     const decryptedData: ArrayBuffer = await crypto.subtle.decrypt(
         {

@@ -13,6 +13,8 @@
 
     export let requiresDecryption: boolean = true;
 
+    export let key: CryptoKey;
+
     const received: string = new Date().toLocaleTimeString();
 
     let decryptedMessage: string;
@@ -33,10 +35,10 @@
         }
 
         // decrypt username
-        decryptedUsername = dec.decode(await decrypt(username, keys));
+        decryptedUsername = dec.decode(await decrypt(username, key));
 
         // decrypt content
-        decryptedMessage = dec.decode(await decrypt(content, keys));
+        decryptedMessage = dec.decode(await decrypt(content, key));
     });
 </script>
 

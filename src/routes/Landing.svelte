@@ -29,7 +29,7 @@
         }
 
         window.localStorage.setItem("username", username);
-        window.localStorage.setItem("roomKey", roomKey);
+        window.localStorage.setItem("roomKey", roomKey);      
         window.location.href = "/chat";
     };
 

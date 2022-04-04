@@ -14,9 +14,10 @@
     import switchTheme from "@utils/theme.ts";
 
     import FaCloudUploadAlt from "svelte-icons/fa/FaCloudUploadAlt.svelte";
-    import { encryptData } from "src/utils/aes";
+    import { decryptData, encryptData } from "src/utils/aes";
 
     import FileMessage from "@components/File.svelte";
+    import { arrayBufferToBase64, base64ToArrayBuffer } from "src/utils/b64";
 
     // get username and roomKey from localStorage
     const username: string = window.localStorage.getItem("username");
@@ -29,6 +30,7 @@
         content: { iv: string; data: string };
         isSystem?: boolean;
         requiresDecryption?: boolean;
+        key?: CryptoKey;
     }
 
     interface eventData {
@@ -86,22 +88,45 @@
                 return;
         }
 
+        // create random aes 256 gcm key and send it with the message encrypted
+        const messageKeypair: CryptoKey =
+            await window.crypto.subtle.generateKey(
+                {
+                    name: "AES-GCM",
+                    length: 256,
+                },
+                true,
+                ["encrypt", "decrypt"]
+            );
+
+        // export the key as raw
+        const messageKeyRaw: ArrayBuffer = await window.crypto.subtle.exportKey(
+            "raw",
+            messageKeypair
+        );
+
+        const encryptedMessageKey: { iv: string; data: string } = await encrypt(
+            messageKeyRaw,
+            keys
+        );
+
         // encrypt username
         const encryptedUsername: { iv: string; data: string } = await encrypt(
             enc.encode(username),
-            keys
+            messageKeypair
         );
 
         // encrypt message
         const encryptedMessage: { iv: string; data: string } = await encrypt(
             enc.encode(message),
-            keys
+            messageKeypair
         );
 
         socket.emit("chat event", {
             roomName: hashedRoomKey,
             username: encryptedUsername,
             message: encryptedMessage,
+            key: encryptedMessageKey,
         });
 
         message = "";
@@ -219,6 +244,7 @@
     interface messageFromServer {
         username: { iv: string; data: string };
         message: { iv: string; data: string };
+        key: { iv: string; data: string };
     }
 
     let messageRef: HTMLDivElement;
@@ -229,6 +255,16 @@
             content: msg.message,
             isSystem: false,
             requiresDecryption: true,
+            key: await window.crypto.subtle.importKey(
+                "raw",
+                await decrypt(msg.key, keys),
+                {
+                    name: "AES-GCM",
+                    length: 256,
+                },
+                false,
+                ["decrypt"]
+            ),
         };
 
         messages = [...messages, { type: "message", data: parsedData }];
