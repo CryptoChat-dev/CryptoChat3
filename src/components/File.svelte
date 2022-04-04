@@ -30,7 +30,7 @@
         const blob = new Blob([decrypted], {
             type,
         });
-        
+
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -46,17 +46,37 @@
         </p>
         <p class="timestamp">{received}</p>
     </div>
-    <p class="content">
-        I've shared a file with you! <p class="download" on:click={doDecrypt}
-            >Download {name}</p
-        >
-    </p>
+    <div>
+        <p class="content">I've shared an encrypted file with you.</p>
+        <div class="downloadButton">
+            <p on:click={doDecrypt} style="margin: 0; padding: 0">Download {name.length > 30 ? `${name.substring(0, 30)}...` : name}</p>
+        </div>
+    </div>
 </div>
 
 <style lang="scss">
-    .download {
-        color: rgb(0,100,200);
-        text-decoration: none;
+    .downloadButton {
+        user-select: none;
+        height: 1rem;
+        width: fit-content;
+        padding: .5rem;
+        background-color: #0572ec;
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5px;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition-duration: 250ms;
+        &:hover {
+            background-color: #014ba0;
+        }
+        &:active {
+            background-color: #00326b;
+        }
     }
 
     .username {
