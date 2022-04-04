@@ -41,6 +41,7 @@
         id: string;
         iv: string;
         name: string;
+        type: string;
     }
 
     let messages: eventData[] = [];
@@ -286,17 +287,19 @@
                 const encryptedUsername: { iv: string; data: string } =
                     await encrypt(enc.encode(username), keys);
 
-                const encryptedName: { iv: string; data: string } = await encrypt(
-                    enc.encode(file.name),
-                    keys
-                );
+                const encryptedName: { iv: string; data: string } =
+                    await encrypt(enc.encode(file.name), keys);
+
+                const encryptedType: { iv: string; data: string } =
+                    await encrypt(enc.encode(file.type), keys);
 
                 socket.emit("file event", {
-                    "roomName": hashedRoomKey,
-                    "username": encryptedUsername,
-                    "id": response.uuid,
-                    "iv": encryptedFileData.iv,
-                    "name": encryptedName,
+                    roomName: hashedRoomKey,
+                    username: encryptedUsername,
+                    id: response.uuid,
+                    iv: encryptedFileData.iv,
+                    name: encryptedName,
+                    type: encryptedType,
                 });
             } else {
                 alert("Unable to upload file.");
@@ -309,6 +312,7 @@
         iv: string;
         id: string;
         name: { iv: string; data: string };
+        type: { iv: string; data: string };
     }) => {
         // decrypt username
         const decryptedUsername: string = dec.decode(
@@ -319,11 +323,21 @@
             await decrypt({ iv: msg.name.iv, data: msg.name.data }, keys)
         );
 
+        const decryptedType: string = dec.decode(
+            await decrypt({ iv: msg.type.iv, data: msg.type.data }, keys)
+        );
+
         messages = [
             ...messages,
             {
                 type: "file",
-                data: { username: decryptedUsername, id: msg.id, iv: msg.iv, name: decryptedName },
+                data: {
+                    username: decryptedUsername,
+                    id: msg.id,
+                    iv: msg.iv,
+                    name: decryptedName,
+                    type: decryptedType,
+                },
             },
         ];
     };

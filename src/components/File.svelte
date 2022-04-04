@@ -5,6 +5,7 @@
     export let id: string;
     export let iv: string;
     export let name: string;
+    export let type: string;
 
     export let keys: CryptoKey;
 
@@ -21,8 +22,12 @@
         const decrypted = await decryptData({ iv, data: arrayBuffer }, keys);
 
         const blob = new Blob([decrypted], {
-            type: "application/octet-stream",
+            type,
         });
+
+        // assign name to blob
+
+        
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
