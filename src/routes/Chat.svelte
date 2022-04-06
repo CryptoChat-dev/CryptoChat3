@@ -17,7 +17,8 @@
     import { encryptData } from "src/utils/aes";
 
     import FileMessage from "@components/File.svelte";
-import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
+
+    import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
 
     // get username and roomKey from localStorage
     const username: string = window.localStorage.getItem("username");
@@ -44,6 +45,7 @@ import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
         iv: string;
         name: string;
         type: string;
+        key: CryptoKey;
     }
 
     let messages: eventData[] = [];
@@ -93,6 +95,15 @@ import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
             case "/clear":
                 messages = [];
                 message = "";
+                return;
+            case "/theme":
+                switchTheme();
+                message = "";
+                return;
+            case "/quit":
+            case "/exit":
+            case "/leave":
+                window.location.href = "/";
                 return;
         }
 
@@ -313,9 +324,25 @@ import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
         reader.onload = async () => {
             const fileData: ArrayBuffer = reader.result as ArrayBuffer;
 
+            const fileKey: CryptoKey = await window.crypto.subtle.generateKey(
+                {
+                    name: "AES-GCM",
+                    length: 256,
+                },
+                true,
+                ["encrypt", "decrypt"]
+            );
+
+            // export the key as raw
+            const fileKeyRaw: ArrayBuffer =
+                await window.crypto.subtle.exportKey("raw", fileKey);
+
+            const encryptedFileKey: { iv: string; data: string } =
+                await encrypt(fileKeyRaw, keys);
+
             // encrypt file data
             const encryptedFileData: { iv: string; data: ArrayBuffer } =
-                await encryptData(fileData, keys);
+                await encryptData(fileData, fileKey);
 
             const formData: FormData = new FormData();
             formData.append("efile", new Blob([encryptedFileData.data]));
@@ -344,6 +371,7 @@ import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
                     iv: encryptedFileData.iv,
                     name: encryptedName,
                     type: encryptedType,
+                    key: encryptedFileKey,
                 });
             } else {
                 alert("Unable to upload file.");
@@ -357,6 +385,7 @@ import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
         id: string;
         name: { iv: string; data: string };
         type: { iv: string; data: string };
+        key: { iv: string; data: string };
     }) => {
         // decrypt username
         const decryptedUsername: string = dec.decode(
@@ -371,6 +400,12 @@ import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
             await decrypt({ iv: msg.type.iv, data: msg.type.data }, keys)
         );
 
+        // decrypt key
+        const decryptedKey: ArrayBuffer = await decrypt(
+            { iv: msg.key.iv, data: msg.key.data },
+            keys
+        );
+
         messages = [
             ...messages,
             {
@@ -381,6 +416,16 @@ import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
                     iv: msg.iv,
                     name: decryptedName,
                     type: decryptedType,
+                    key: await window.crypto.subtle.importKey(
+                        "raw",
+                        decryptedKey,
+                        {
+                            name: "AES-GCM",
+                            length: 256,
+                        },
+                        true,
+                        ["decrypt"]
+                    ),
                 },
             },
         ];
@@ -396,7 +441,7 @@ import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
     </div>
     <div class="titles">
         <h1 style="margin: 0; font-size: 3rem;">CryptoChat</h1>
-        <h2 style="margin: 0;">A stunning encrypted webapp.</h2>
+        <h2 style="margin: 0;">A stunning encrypted chat app.</h2>
     </div>
     <div class="chatBox" bind:this={messageRef}>
         {#each messages as message}
@@ -404,7 +449,7 @@ import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
                 <!-- group messages depending on author -->
                 <Message {keys} {...message.data} />
             {:else if message.type === "file"}
-                <FileMessage {keys} {...message.data} />
+                <FileMessage {...message.data} />
             {/if}
         {/each}
     </div>

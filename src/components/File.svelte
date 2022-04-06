@@ -6,8 +6,7 @@
     export let iv: string;
     export let name: string;
     export let type: string;
-
-    export let keys: CryptoKey;
+    export let key: CryptoKey;
 
     const received = new Date().toLocaleTimeString();
 
@@ -25,7 +24,7 @@
         const arrayBuffer = await res.arrayBuffer();
 
         // decrypt
-        const decrypted = await decryptData({ iv, data: arrayBuffer }, keys);
+        const decrypted = await decryptData({ iv, data: arrayBuffer }, key);
 
         const blob = new Blob([decrypted], {
             type,
@@ -48,8 +47,12 @@
     </div>
     <div>
         <p class="content">I've shared an encrypted file with you.</p>
-        <div class="downloadButton">
-            <p on:click={doDecrypt} style="margin: 0; padding: 0">Download {name.length > 30 ? `${name.substring(0, 30)}...` : name}</p>
+        <div on:click={doDecrypt} class="downloadButton">
+            <p style="margin: 0; padding: 0">
+                Download {name.length > 30
+                    ? `${name.substring(0, 30)}...`
+                    : name}
+            </p>
         </div>
     </div>
 </div>
@@ -59,7 +62,7 @@
         user-select: none;
         height: 1rem;
         width: fit-content;
-        padding: .5rem;
+        padding: 0.5rem;
         background-color: #0572ec;
         color: white;
         border: none;
