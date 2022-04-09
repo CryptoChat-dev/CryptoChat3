@@ -38,6 +38,12 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+@media only screen and (max-width: 800px) {
+    body {
+        padding: 1rem;
+    }
+}
+
 a {
 	color: rgb(0,100,200);
 	text-decoration: none;
@@ -128,10 +134,17 @@ h2 {
     margin: auto;
     padding: 1rem;
 
-    width: 20rem;
+    max-width: 40rem;
+    width: fit-content;
     border-radius: 10px;
 
     color: var(--txt-color);
     margin-top: 20%;
     text-align: center;
+}
+
+@media screen and (max-width: 800px) {
+    .dialog__content {
+        width: 90%;
+    }   
 }

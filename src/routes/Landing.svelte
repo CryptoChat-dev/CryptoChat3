@@ -9,17 +9,22 @@
 
     import UnsupportedAlert from "@components/UnsupportedAlert.svelte";
 
+    import type Dexie from "dexie";
+    import History from "@components/History.svelte";
+
     let username: string = "";
 
     let roomKey: string = "";
 
     let showAlert: boolean = false;
 
+    export let db: Dexie;
+
     const doJoin = async (bypass: boolean = false) => {
         if (!username || !roomKey) {
             return;
         }
-        
+
         const passwordScore: number = await scorePassword(roomKey);
 
         if (passwordScore < 85 && !bypass) {
@@ -29,7 +34,28 @@
         }
 
         window.localStorage.setItem("username", username);
-        window.localStorage.setItem("roomKey", roomKey);      
+        window.localStorage.setItem("roomKey", roomKey);
+
+        // add to history
+        db["history"].add({
+            username,
+            key: roomKey,
+            timestamp: Date.now(),
+        });
+
+        // check if there are more than 3 entries
+        const history: Array<{
+            username: string;
+            key: string;
+            timestamp: number;
+            id: number;
+        }> = await db["history"].toArray();
+
+        if (history.length > 3) {
+            // remove oldest entry
+            db["history"].delete(history[0].id);
+        }
+
         window.location.href = "/chat";
     };
 
@@ -37,6 +63,8 @@
         "data-theme",
         window.localStorage.getItem("theme")
     );
+
+    let showHistory: boolean = false;
 </script>
 
 {#if !window.crypto || !window.crypto.subtle}
@@ -47,6 +75,15 @@
     <KeyAlert
         dismiss={() => (showAlert = false)}
         override={() => doJoin(true)}
+    />
+{/if}
+
+{#if showHistory}
+    <History
+        {db}
+        dismiss={() => {
+            showHistory = false;
+        }}
     />
 {/if}
 
@@ -78,13 +115,23 @@
             <GiPerspectiveDiceSixFacesTwo />
         </div>
     </div>
-    <div style="display: flex; justify-content: space-between">
+    <div class="buttons">
         <button on:click={switchTheme}>Theme</button>
+        <button
+            on:click={() => {
+                showHistory = true;
+            }}>History</button
+        >
         <button on:click={() => doJoin(false)}>Join</button>
     </div>
 </div>
 
 <style lang="scss">
+    .buttons {
+        display: flex;
+        justify-content: space-between;
+    }
+
     .imageParent {
         display: flex;
         justify-content: center;
