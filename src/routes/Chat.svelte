@@ -482,6 +482,11 @@
 />
 
 <style lang="scss">
+
+    :global(body) {
+        padding: 0;
+    }
+
     .buttons {
         display: flex;
         justify-content: space-between;
@@ -548,8 +553,10 @@
             width: 100%;
             height: 100%;
             border-radius: 0;
-            padding: 0;
+            padding: .5rem;
+            box-sizing: border-box;
         }
+
     }
 
     .infoBar {
