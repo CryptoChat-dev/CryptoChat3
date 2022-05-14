@@ -32,6 +32,7 @@
         isSystem?: boolean;
         requiresDecryption?: boolean;
         key?: CryptoKey;
+        uid?: string;
     }
 
     interface eventData {
@@ -46,6 +47,7 @@
         name: string;
         type: string;
         key: CryptoKey;
+        uid: string;
     }
 
     let messages: eventData[] = [];
@@ -264,6 +266,7 @@
         username: { iv: string; data: string };
         message: { iv: string; data: string };
         key: { iv: string; data: string };
+        uid: string;
     }
 
     let messageRef: HTMLDivElement;
@@ -284,6 +287,7 @@
                 false,
                 ["decrypt"]
             ),
+            uid: msg.uid,
         };
 
         messages = [...messages, { type: "message", data: parsedData }];
@@ -444,10 +448,15 @@
         <h2 style="margin: 0;">A stunning encrypted chat app.</h2>
     </div>
     <div class="chatBox" bind:this={messageRef}>
-        {#each messages as message}
+        {#each messages as message, index}
             {#if message.type === "message"}
                 <!-- group messages depending on author -->
-                <Message {keys} {...message.data} />
+                <Message
+                    {keys}
+                    {...message.data}
+                    group={message.data.uid &&
+                        message.data.uid === messages[index - 1].data.uid}
+                />
             {:else if message.type === "file"}
                 <FileMessage {...message.data} />
             {/if}
@@ -482,7 +491,6 @@
 />
 
 <style lang="scss">
-
     :global(body) {
         padding: 0;
     }
@@ -553,10 +561,9 @@
             width: 100%;
             height: 100%;
             border-radius: 0;
-            padding: .5rem;
+            padding: 0.5rem;
             box-sizing: border-box;
         }
-
     }
 
     .infoBar {

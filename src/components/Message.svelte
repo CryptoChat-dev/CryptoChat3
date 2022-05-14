@@ -9,11 +9,11 @@
 
     export let isSystem: boolean = false;
 
-    export let keys: CryptoKey;
-
     export let requiresDecryption: boolean = true;
 
     export let key: CryptoKey;
+
+    export let group: boolean = false;
 
     const received: string = new Date().toLocaleTimeString();
 
@@ -49,24 +49,33 @@
                 ONLY YOU CAN SEE THIS
             </p>
         {/if}
-        <div style="display: flex; align-items: center;">
-            <p
-                class="username"
-                style={`color: ${isSystem ? "#C081FF" : "var(--txt-color)"}`}
-            >
-                {decryptedUsername}
-            </p>
-            <p class="timestamp">{received}</p>
-        </div>
-        <p class="content">{decryptedMessage}</p>
+        {#if !group}
+            <div style="display: flex; align-items: center;">
+                <p
+                    class="username"
+                    style={`color: ${
+                        isSystem ? "#C081FF" : "var(--txt-color)"
+                    }`}
+                >
+                    {decryptedUsername}
+                </p>
+                <p class="timestamp">{received}</p>
+            </div>
+        {/if}
+        <p class={`content ${group && "no-margin"}`}>{decryptedMessage}</p>
     {/if}
 </div>
 
 <style lang="scss">
+    .no-margin {
+        margin: 0;
+    }
+
     .username {
         font-size: 1.25rem;
         font-weight: bold;
         margin: 0;
+        margin-top: 1rem;
     }
 
     .timestamp {
@@ -84,5 +93,6 @@
     .content {
         white-space: pre-wrap;
         word-break: break-word;
+        margin-bottom: 0;
     }
 </style>
