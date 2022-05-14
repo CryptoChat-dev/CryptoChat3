@@ -19,6 +19,7 @@
     import FileMessage from "@components/File.svelte";
 
     import type { Word32Array } from "jscrypto/es6/lib/Word32Array";
+    import UploadingAlert from "@components/UploadingAlert.svelte";
 
     // get username and roomKey from localStorage
     const username: string = window.localStorage.getItem("username");
@@ -319,6 +320,8 @@
     const doFileUpload = async (e: InputEvent) => {
         // get file from input
         const file: File = (e.target as HTMLInputElement).files[0];
+        currentFileName = file.name;
+        showUploadingDialog = true;
 
         // get file data
         let reader = new FileReader();
@@ -377,6 +380,8 @@
                     type: encryptedType,
                     key: encryptedFileKey,
                 });
+
+                showUploadingDialog = false;
             } else {
                 alert("Unable to upload file.");
             }
@@ -430,11 +435,19 @@
                         true,
                         ["decrypt"]
                     ),
+                    uid: msg.id,
                 },
             },
         ];
     };
+
+    let currentFileName: string = "";
+    let showUploadingDialog: boolean = false;
 </script>
+
+{#if showUploadingDialog}
+    <UploadingAlert fileName={currentFileName} />
+{/if}
 
 <div class="container">
     <div class="infoBar">
