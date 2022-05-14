@@ -380,11 +380,11 @@
                     type: encryptedType,
                     key: encryptedFileKey,
                 });
-
-                showUploadingDialog = false;
             } else {
                 alert("Unable to upload file.");
             }
+
+            showUploadingDialog = false;
         };
     };
 
